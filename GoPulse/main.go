@@ -1,44 +1,49 @@
 package main
 
 import (
+	"changeme/backend/db"
+	"changeme/backend/monitor"
+	"changeme/backend/process"
+	"changeme/backend/service"
+	"context"
 	"embed"
-
-	"log"
-	"time"
+	"log/slog"
+	"os"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
+	"github.com/wailsapp/wails/v3/pkg/events"
 )
 
-// Wails uses Go's `embed` package to embed the frontend files into the binary.
-// Any files in the frontend/dist folder will be embedded into the binary and
-// made available to the frontend.
-// See https://pkg.go.dev/embed for more information.
+type eventEmitter struct {
+	emit func(name string, data ...any) bool
+}
 
-//go:embed all:frontend/dist
+func (e *eventEmitter) Emit(name string, data ...any) {
+	e.emit(name, data...)
+}
+
 var assets embed.FS
 
 func init() {
-	// Register a custom event whose associated data type is string.
-	// This is not required, but the binding generator will pick up registered events
-	// and provide a strongly typed JS/TS API for them.
 	application.RegisterEvent[string]("time")
 }
 
-// main function serves as the application's entry point. It initializes the application, creates a window,
-// and starts a goroutine that emits a time-based event every second. It subsequently runs the application and
-// logs any error that might occur.
 func main() {
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
-	// Create a new Wails application by providing the necessary options.
-	// Variables 'Name' and 'Description' are for application metadata.
-	// 'Assets' configures the asset server with the 'FS' variable pointing to the frontend files.
-	// 'Bind' is a list of Go struct instances. The frontend has access to the methods of these instances.
-	// 'Mac' options tailor the application when running an macOS.
+	database, err := db.Open("gopulse.db")
+	if err != nil {
+		logger.Error("failed to open database", "err", err)
+		os.Exit(1)
+	}
+	defer database.Close()
+
 	app := application.New(application.Options{
 		Name:        "GoPulse",
-		Description: "A demo of using raw HTML & CSS",
+		Description: "System monitor",
 		Services: []application.Service{
-			application.NewService(&GreetService{}),
+			application.NewService(&service.ProcessService{}),
+			application.NewService(&service.HistoryService{DB: database}),
 		},
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),
@@ -48,14 +53,9 @@ func main() {
 		},
 	})
 
-	// Create a new window with the necessary options.
-	// 'Title' is the title of the window.
-	// 'Mac' options tailor the window when running on macOS.
-	// 'BackgroundColour' is the background colour of the window.
-	// 'URL' is the URL that will be loaded into the webview.
-	app.Window.NewWithOptions(application.WebviewWindowOptions{
-		Title: "Window 1",
-		// Window sized to the golden ratio (1000 / 618 ≈ 1.618).
+	// 1. Создаём окно (сохраняем ссылку для трея)
+	mainWindow := app.Window.NewWithOptions(application.WebviewWindowOptions{
+		Title:  "GoPulse",
 		Width:  1000,
 		Height: 618,
 		Mac: application.MacWindow{
@@ -67,21 +67,47 @@ func main() {
 		URL:              "/",
 	})
 
-	// Create a goroutine that emits an event containing the current time every second.
-	// The frontend can listen to this event and update the UI accordingly.
+	// 2. Создаём системный трей (ТЗ 5.4)
+	systray := app.SystemTray.New()
+
+	// Иконка: если у вас есть assets/icon.png, раскомментируйте и добавьте //go:embed
+	// //go:embed assets/icon.png
+	// var trayIcon []byte
+	// systray.SetIcon(trayIcon)
+
+	systray.SetTooltip("GoPulse — System Monitor")
+
+	// 3. Меню трея: Открыть / Выйти
+	menu := app.NewMenu()
+	menu.Add("Открыть").OnClick(func(ctx *application.Context) {
+		mainWindow.Show()
+		mainWindow.Focus()
+	})
+	menu.AddSeparator()
+	menu.Add("Выйти").OnClick(func(ctx *application.Context) {
+		app.Quit()
+	})
+	systray.SetMenu(menu)
+
+	// 4. Перехват закрытия окна → скрыть в трей, а не завершать
+	// Только RegisterHook может отменить закрытие через e.Cancel()
+	mainWindow.RegisterHook(events.Common.WindowClosing, func(e *application.WindowEvent) {
+		mainWindow.Hide() // скрываем окно
+		e.Cancel()        // отменяем стандартное уничтожение
+	})
+
+	// 5. Запуск сбора метрик
+	collector := monitor.New()
+	manager := process.New(collector, database, &eventEmitter{emit: app.Event.Emit}, logger)
+
 	go func() {
-		for {
-			now := time.Now().Format(time.RFC1123)
-			app.Event.Emit("time", now)
-			time.Sleep(time.Second)
+		if err := manager.Run(context.Background()); err != nil {
+			logger.Error("manager stopped", "err", err)
 		}
 	}()
 
-	// Run the application. This blocks until the application has been exited.
-	err := app.Run()
-
-	// If an error occurred while running the application, log it and exit.
-	if err != nil {
-		log.Fatal(err)
+	// 6. Запуск приложения
+	if err := app.Run(); err != nil {
+		logger.Error("app run failed", "err", err)
 	}
 }

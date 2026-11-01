@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+    --color-bg-light: #f6f7fb;
+    --color-bg-dark: #06070f;
+}
+
+html,
+body,
+#root {
+    min-height: 100vh;
+}
+
+body {
+    @apply bg-bg-light text-slate-800 dark:bg-bg-dark dark:text-slate-100;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background-image:
+        radial-gradient(1200px 600px at 20% -10%, rgba(96, 165, 250, 0.10), transparent 60%),
+        radial-gradient(900px 500px at 110% 10%, rgba(168, 85, 247, 0.08), transparent 60%);
+    background-attachment: fixed;
+}
+
+.tabular {
+    font-variant-numeric: tabular-nums;
+}

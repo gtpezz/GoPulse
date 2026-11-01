@@ -1,0 +1,239 @@
+:root {
+    color-scheme: dark;
+    --bg: #06070f;
+    --bg-elev: rgba(255, 255, 255, 0.04);
+    --border: rgba(255, 255, 255, 0.08);
+    --text: #e6e6f0;
+    --muted: #94a3b8;
+    --muted-2: #64748b;
+    --ok: #4ade80;
+    --warn: #fbbf24;
+    --danger: #f87171;
+    --accent: #60a5fa;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background: radial-gradient(1200px 600px at 20% -10%,
+            rgba(96, 165, 250, 0.10),
+            transparent 60%),
+        radial-gradient(900px 500px at 110% 10%,
+            rgba(168, 85, 247, 0.08),
+            transparent 60%),
+        var(--bg);
+    color: var(--text);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+        sans-serif;
+}
+
+/* Header */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+.header__left {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+}
+
+.header__title {
+    margin: 0;
+    font-size: 26px;
+    letter-spacing: 0.4px;
+    font-weight: 700;
+}
+
+.header__subtitle {
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.header__right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.header__time {
+    font-size: 12px;
+    color: var(--muted-2);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Badge */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    border: 1px solid var(--border);
+    background: var(--bg-elev);
+    color: var(--muted);
+}
+
+.badge--ok {
+    color: var(--ok);
+}
+
+.badge--wait {
+    color: var(--warn);
+}
+
+.badge__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 0 3px currentColor;
+    animation: pulse 1.6s ease-in-out infinite;
+}
+
+.badge--wait .badge__dot {
+    animation-duration: 2.4s;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 0.4;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+/* Page */
+.page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px 32px 40px;
+}
+
+/* Grid */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 16px;
+}
+
+/* Card */
+.card {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 18px;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.card:hover {
+    transform: translateY(-1px);
+    border-color: rgba(255, 255, 255, 0.14);
+}
+
+.card__head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    color: var(--muted);
+}
+
+.card__icon {
+    display: inline-flex;
+    color: var(--accent);
+}
+
+.card__title {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+.card__primary {
+    font-size: 22px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 8px;
+}
+
+.card__secondary {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 8px;
+    font-variant-numeric: tabular-nums;
+}
+
+.card__io {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Progress */
+.progress {
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+}
+
+.progress__fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.4s ease, background-color 0.3s ease;
+}
+
+.progress__fill--neutral {
+    background: var(--accent);
+}
+
+.progress__fill--ok {
+    background: var(--ok);
+}
+
+.progress__fill--warn {
+    background: var(--warn);
+}
+
+.progress__fill--danger {
+    background: var(--danger);
+}
+
+/* Misc */
+.hint {
+    color: var(--muted);
+    padding: 24px 0;
+}
+
+.hint code {
+    padding: 2px 6px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.06);
+    font-size: 12px;
+}
+
+.error {
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: rgba(248, 113, 113, 0.08);
+    border: 1px solid rgba(248, 113, 113, 0.25);
+    color: #fca5a5;
+    margin-bottom: 16px;
+}
