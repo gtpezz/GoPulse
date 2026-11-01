@@ -87,7 +87,7 @@ gopulse/
 ```sql
 CREATE TABLE IF NOT EXISTS system_history (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     cpu_usage_avg REAL,      -- Средний % за минуту
     ram_usage_avg REAL,      -- Средний % за минуту
     net_download_bytes INTEGER, -- Суммарный трафик за минуту
