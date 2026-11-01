@@ -54,7 +54,6 @@ func main() {
 		},
 	})
 
-	// 1. Создаём окно (сохраняем ссылку для трея)
 	mainWindow := app.Window.NewWithOptions(application.WebviewWindowOptions{
 		Title:  "GoPulse",
 		Width:  1000,
@@ -68,17 +67,10 @@ func main() {
 		URL:              "/",
 	})
 
-	// 2. Создаём системный трей (ТЗ 5.4)
 	systray := app.SystemTray.New()
-
-	// Иконка: если у вас есть assets/icon.png, раскомментируйте и добавьте //go:embed
-	// //go:embed assets/icon.png
-	// var trayIcon []byte
-	// systray.SetIcon(trayIcon)
 
 	systray.SetTooltip("GoPulse — System Monitor")
 
-	// 3. Меню трея: Открыть / Выйти
 	menu := app.NewMenu()
 	menu.Add("Открыть").OnClick(func(ctx *application.Context) {
 		mainWindow.Show()
@@ -90,14 +82,11 @@ func main() {
 	})
 	systray.SetMenu(menu)
 
-	// 4. Перехват закрытия окна → скрыть в трей, а не завершать
-	// Только RegisterHook может отменить закрытие через e.Cancel()
 	mainWindow.RegisterHook(events.Common.WindowClosing, func(e *application.WindowEvent) {
-		mainWindow.Hide() // скрываем окно
-		e.Cancel()        // отменяем стандартное уничтожение
+		mainWindow.Hide()
+		e.Cancel()
 	})
 
-	// 5. Запуск сбора метрик
 	collector := monitor.New()
 	manager := process.New(collector, database, &eventEmitter{emit: app.Event.Emit}, logger)
 
@@ -107,7 +96,6 @@ func main() {
 		}
 	}()
 
-	// 6. Запуск приложения
 	if err := app.Run(); err != nil {
 		logger.Error("app run failed", "err", err)
 	}
