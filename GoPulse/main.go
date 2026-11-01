@@ -22,6 +22,7 @@ func (e *eventEmitter) Emit(name string, data ...any) {
 	e.emit(name, data...)
 }
 
+//go:embed all:frontend/dist
 var assets embed.FS
 
 func init() {
