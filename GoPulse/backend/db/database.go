@@ -85,7 +85,7 @@ func (d *Database) InsertHistory(ctx context.Context, row model.HistoryRow) erro
 		`INSERT INTO system_history
 			(created_at, cpu_usage_avg, ram_usage_avg, net_download_bytes, net_upload_bytes)
 		 VALUES (?, ?, ?, ?, ?)`,
-		row.CreatedAt, row.CPUUsageAvg, row.RAMUsageAvg,
+		row.CreatedAt.UTC(), row.CPUUsageAvg, row.RAMUsageAvg,
 		row.NetDownloadBytes, row.NetUploadBytes,
 	)
 	if err != nil {
@@ -100,7 +100,7 @@ func (d *Database) QueryHistory(ctx context.Context, from, to time.Time) ([]mode
 		   FROM system_history
 		  WHERE created_at >= ? AND created_at < ?
 		  ORDER BY created_at ASC`,
-		from, to,
+		from.UTC(), to.UTC(),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("query history: %w", err)
@@ -109,19 +109,17 @@ func (d *Database) QueryHistory(ctx context.Context, from, to time.Time) ([]mode
 
 	var out []model.HistoryRow
 	for rows.Next() {
-		var (
-			r         model.HistoryRow
-			createdAt string
-		)
-		if err := rows.Scan(&createdAt, &r.CPUUsageAvg, &r.RAMUsageAvg,
-			&r.NetDownloadBytes, &r.NetUploadBytes); err != nil {
+		var r model.HistoryRow
+		if err := rows.Scan(
+			&r.CreatedAt,
+			&r.CPUUsageAvg,
+			&r.RAMUsageAvg,
+			&r.NetDownloadBytes,
+			&r.NetUploadBytes,
+		); err != nil {
 			return nil, fmt.Errorf("scan history: %w", err)
 		}
-		t, err := time.Parse("2006-01-02 15:04:05", createdAt)
-		if err != nil {
-			return nil, fmt.Errorf("parse created_at %q: %w", createdAt, err)
-		}
-		r.CreatedAt = t.UTC()
+		r.CreatedAt = r.CreatedAt.UTC()
 		out = append(out, r)
 	}
 	if err := rows.Err(); err != nil {
